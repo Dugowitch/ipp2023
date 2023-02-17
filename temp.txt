@@ -1,0 +1,3 @@
+DEFVAR GF@test#jakub
+
+MOVE GF@test int@5
