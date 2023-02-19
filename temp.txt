@@ -1,7 +1,0 @@
-DEFVAR GF@test#jakub
-CREATEFRAME       #ruka hore
-
-
-MOVE GF@test int@5
-POPFRAME
-POPS TF@_test2
