@@ -1,32 +1,45 @@
-import Frame
+from Frame import Frame
 
-class FrameMaganer:
-    GF = Frame();
-    TF = None;
-    LF = [];
+class FrameManager:
+    def __init__(self):
+        self.GF = Frame();
+        self.TF = None;
+        self.LF = [];
 
     def pushframe(self):
-        if __class__.TF != None:
-            __class__.LF.append(__class__.TF)
-            __class__.TF = None
+        if self.TF != None:
+            self.LF.append(self.TF)
+            self.TF = None
         else:
-            # TODO: error, there is not frame to push
-            pass
+            exit(55) # error - frame does not exist
 
     def popframe(self):
-        if __class__.LF != []:
-            __class__.TF = __class__.LF.pop()
+        if self.LF != []:
+            self.TF = self.LF.pop()
         else:
-            # TODO: error, there is not frame to pop
-            pass
+            exit(55) # error - frame stack is empty
 
     def createframe(self):
-        __class__.TF = Frame()
+        self.TF = Frame()
+
+    def getVal(self, var):
+        frame, name = self.getFrame(var)
+        return frame.getVal(name)
+
+    def getFrame(self, var):
+        frame, name = var.split("@")
+        # Set frame
+        if frame == "LF":
+            frame = self.currentLF
+        elif frame == "TF":
+            frame = self.TF
+        elif frame == "GF":
+            frame = self.GF
+        return frame, name
 
     @property
     def currentLF(self):
-        if __class__.LF != []:
-            return __class__.LF[0]
+        if self.LF != []:
+            return self.LF[0]
         else:
-            # TODO: error, accessing LF before CREATEFRAME and PUSHFRAME
-            return None
+            exit(55) # error - frame does not exist

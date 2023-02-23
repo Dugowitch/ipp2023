@@ -1,17 +1,22 @@
 class Frame:
-    # všetky premenné tu sú static
-    # TODO use dictionary as hashtable to store variables
- 
     def __init__(self):
-        self.vars = {}
+        self.vars = {} # dictionary as hashtable to store variables
+
+    def defvar(self, name):
+        if name in self.vars:
+            print("> exitting in Frame.defvar() - var redefinition") # TODO: remove
+            exit(52) # error - var redefinition
+        else:
+            self.vars[name] = None;
 
     def save(self, name, value):
-        self.vars[name] = value
-
-    @staticmethod
-    def has(self, key):
-        if key in self.vars:
-            return self.vars[key]
+        if name not in self.vars:
+            exit(54) # error - assignment to undefined variable
         else:
-            # TODO: check collision with bool@false
-            return False 
+            self.vars[name] = value
+
+    def getVal(self, name):
+        if name in self.vars:
+            return self.vars[name]
+        else:
+            exit(54) # error - accessing undefined variable
