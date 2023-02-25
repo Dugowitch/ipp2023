@@ -11,21 +11,21 @@ class Instruction(ABC):
         frame, name = FRAME.getFrame(args[0].text)
         n1 = n2 = None
 
-        if (args[1].type == "var"):
+        if (args[1].get("type") == "var"):
             _, n1_name = FRAME.getFrame(args[1].text)
             n1 = FRAME.getVal(n1_name)
         else:
             n1 = int(args[1].text)
 
         if args[2]:
-            if (args[2].type == "var"):
+            if (args[2].get("type") == "var"):
                 _, n2_name = FRAME.getFrame(args[2].text)
                 n2 = FRAME.getVal(n2_name)
             else:
                 n2 = int(args[2].text)
 
-        return frame, name, n1, n2        
-
+        return frame, name, n1, n2
+    
     @abstractmethod
     def execute(self, **params):
         pass
@@ -35,12 +35,19 @@ class Move(Instruction):
         if len(self.args) == 2:
             dst = self.args[0]
             src = self.args[1]
+            frame, name = FRAME.getFrame(dst.text)
             newVal = None
-            if src.type == "var":
+            if src.get("type") == "var":
                 newVal = FRAME.getVal(src.text)
             else:
-                newVal = src.text
-            FRAME.save(dst, newVal)
+                type = src.get("type")
+                if type == "int":
+                    newVal = int(src.text)
+                elif type == "bool":
+                    newVal = False if src.text.lower() == "false" else True
+                else:
+                    newVal = src.text
+            frame.save(name, newVal)
         else:
             print("> exitting in Move.execute() - incorrect number of arguments") # TODO: remove
             exit(52) # error - incorrect number of args
@@ -64,7 +71,7 @@ class Defvar(Instruction):
 
 class Call(Instruction):
     def execute(self, FLOW):
-        FLOW.call(self.args[0])
+        FLOW.call(self.args[0].text)
 
 class Return(Instruction):
     def execute(self, FLOW):
@@ -73,7 +80,7 @@ class Return(Instruction):
 class Pushs(Instruction):
     def execute(self, FRAME, STACK):
         toPush = None
-        if self.args[0].type == "var":
+        if self.args[0].get("type") == "var":
             toPush = FRAME.getVal(self.args[0].text)
         else:
             toPush = self.args[0].text
@@ -90,7 +97,19 @@ class Pops(Instruction):
 
 class Add(Instruction):
     def execute(self, FRAME):
-        frame, name, n1, n2 = self._getOps(FRAME, self.args)
+        frame, name = FRAME.getFrame(self.args[0].text)
+        n1 = n2 = None
+
+        if (self.args[1].get("type") == "var"):
+            n1 = FRAME.getVal(self.args[1].text)
+        else:
+            n1 = int(self.args[1].text)
+
+        if (self.args[2].get("type") == "var"):
+            n2 = FRAME.getVal(self.args[2].text)
+        else:
+            n2 = int(self.args[2].text)
+
         frame.save(name, n1 + n2)
 
 class Sub(Instruction):
@@ -154,7 +173,13 @@ class Stri2int(Instruction):
 class Read(Instruction):
     def execute(self, FRAME, IO):
         frame, name = FRAME.getFrame(self.args[0].text)
-        frame.save(name, IO.readOne())
+        type = self.args[1].text
+        val = IO.readOne()
+        if type == "int":
+            val = int(val)
+        elif type == "bool":
+            val = False if val.lower() == "false" else True
+        frame.save(name, val)
 
 class Write(Instruction):
     def execute(self, FRAME, IO):
@@ -191,25 +216,25 @@ class Setchar(Instruction):
 class Type(Instruction):
     def execute(self, FRAME):
         frame, name, _, _ = self._getOps(FRAME, self.args)
-        frame.save(name, self.args[1].type)
+        frame.save(name, self.args[1].get("type"))
 
 class Label(Instruction):
     pass # its parsed in FrameManager constructor 
 
 class Jump(Instruction):
     def execute(self, FLOW):
-        FLOW.jump(self.args[0])
+        FLOW.jump(self.args[0].text)
 
 class Jumpifeq(Instruction):
     def execute(self, FRAME, FLOW):
         label, _, n1, n2 = self._getOps(FRAME, self.args)
-        if (n1 == n2 and self.args[1].type == self.args[2].type):
+        if (n1 == n2 and self.args[1].get("type") == self.args[2].get("type")):
             FLOW.jump(label)
 
 class Jumpifneq(Instruction):
     def execute(self, FRAME, FLOW):
         label, _, n1, n2 = self._getOps(FRAME, self.args)
-        if (n1 != n2 or self.args[1].type != self.args[2].type):
+        if (n1 != n2 or self.args[1].get("type") != self.args[2].get("type")):
             FLOW.jump(label)
 
 class Exit(Instruction):

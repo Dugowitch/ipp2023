@@ -4,7 +4,7 @@ class IOManager:
     def __init__(self, ARGS):
         self.INPUT = []
         if ARGS.input:
-            with open(self.ARGS.input) as f:
+            with open(ARGS.input) as f:
                 raw = f.read()
                 self.INPUT = raw.split("\n")
         else:

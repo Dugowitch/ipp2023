@@ -1,3 +1,4 @@
+import xml.etree.ElementTree as ET
 class FlowManager:
     def __init__(self, root):
         self.ip = 1
@@ -6,12 +7,14 @@ class FlowManager:
         # loop over all instructions and save labels
         for ins in root:
             if (ins.get("opcode") == "LABEL"):
-                self._labels[ins.text] = int(ins.get("order"))
+                for arg in ins:
+                    self._labels[arg.text] = int(ins.get("order"))
 
     def jump(self, label):
-        if self._callstack != []:
+        if label in self._labels:
             self.ip = self._labels[label]
         else:
+            print(f"> trying to jump to {label}")
             print("> exitting in FlowManager.jump() - accessing undefined label") # TODO: remove
             exit(52) # error - trying to use undefined label
 
