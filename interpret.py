@@ -9,8 +9,8 @@ import xml.etree.ElementTree as ET
 class Interpreter:
     def __init__(self):
         self.ARGS = ArgParser()
-        self._loadXML()
         self.IO = IOManager(self.ARGS)
+        self._loadXML()
         self.FLOW = FlowManager(self.SOURCE)
         self.FRAME = FrameManager()
         self.STACK = StackManager()
@@ -37,6 +37,7 @@ class Interpreter:
             
             # execute instruction
             ins = self.IF.gen(curr)
+            print(f"> {ins} with {req_print}") # TODO: remove
             ins.execute(*req)
 
             # increment
@@ -46,6 +47,7 @@ class Interpreter:
         if self.ARGS.source:
             XML = ET.parse(self.ARGS.source)
             self.SOURCE = XML.getroot()
+
         else:
             rawXML = self.IO.read()
             self.SOURCE = ET.fromstring(rawXML) # returns root
