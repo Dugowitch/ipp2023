@@ -20,24 +20,24 @@ class Interpreter:
         while (self.FLOW.ip <= len(self.SOURCE)):
             # get requirements
             req = []
-            req_print = "" # TODO: remove
+            # req_print = "" # TODO: remove
             curr = self.SOURCE[self.FLOW.ip - 1]
             if (curr.get("opcode") in self.IF.requirements["FRAME"]):
                 req.append(self.FRAME);
-                req_print += "FRAME " # TODO: remove
+                # req_print += "FRAME " # TODO: remove
             if (curr.get("opcode") in self.IF.requirements["FLOW"]):
                 req.append(self.FLOW);
-                req_print += "FLOW " # TODO: remove
+                # req_print += "FLOW " # TODO: remove
             if (curr.get("opcode") in self.IF.requirements["IO"]):
                 req.append(self.IO);
-                req_print += "IO " # TODO: remove
+                # req_print += "IO " # TODO: remove
             if (curr.get("opcode") in self.IF.requirements["STACK"]):
                 req.append(self.STACK);
-                req_print += "STACK " # TODO: remove
+                # req_print += "STACK " # TODO: remove
             
             # execute instruction
             ins = self.IF.gen(curr)
-            print(f"> {ins} with {req_print}") # TODO: remove
+            # print(f"> {ins} with {req_print}") # TODO: remove
             ins.execute(*req)
 
             # increment

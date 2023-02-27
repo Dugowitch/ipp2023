@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import re
 
 class Instruction(ABC):
     def __init__(self, ins):
@@ -7,20 +8,18 @@ class Instruction(ABC):
         for arg in ins:
             self.args.append(arg)
 
-    def _getOps(FRAME, *args):
+    def _getOps(self, FRAME, *args):
         frame, name = FRAME.getFrame(args[0].text)
         n1 = n2 = None
 
         if (args[1].get("type") == "var"):
-            _, n1_name = FRAME.getFrame(args[1].text)
-            n1 = FRAME.getVal(n1_name)
+            n1 = FRAME.getVal(args[1].text)
         else:
             n1 = int(args[1].text)
 
-        if args[2]:
+        if len(args) >= 3:
             if (args[2].get("type") == "var"):
-                _, n2_name = FRAME.getFrame(args[2].text)
-                n2 = FRAME.getVal(n2_name)
+                n2 = FRAME.getVal(args[2].text)
             else:
                 n2 = int(args[2].text)
 
@@ -40,11 +39,11 @@ class Move(Instruction):
             if src.get("type") == "var":
                 newVal = FRAME.getVal(src.text)
             else:
-                type = src.get("type")
-                if type == "int":
+                t = src.get("type")
+                if t == "int":
                     newVal = int(src.text)
-                elif type == "bool":
-                    newVal = False if src.text.lower() == "false" else True
+                elif t == "bool":
+                    newVal = True if src.text.lower() == "true" else False
                 else:
                     newVal = src.text
             frame.save(name, newVal)
@@ -88,7 +87,7 @@ class Pushs(Instruction):
 
 class Pops(Instruction):
     def execute(self, FRAME, STACK):
-        if self.args[0]:
+        if len(self.args) == 1:
             frame, name = FRAME.getFrame(self.args[0].text)
             frame.save(name, STACK.pop())
         else:
@@ -114,17 +113,17 @@ class Add(Instruction):
 
 class Sub(Instruction):
     def execute(self, FRAME):
-        frame, name, n1, n2 = self._getOps(FRAME, self.args)
+        frame, name, n1, n2 = self._getOps(FRAME, *self.args)
         frame.save(name, n1 - n2)
 
 class Mul(Instruction):
     def execute(self, FRAME):
-        frame, name, n1, n2 = self._getOps(FRAME, self.args)
+        frame, name, n1, n2 = self._getOps(FRAME, *self.args)
         frame.save(name, n1 * n2)
 
 class Idiv(Instruction):
     def execute(self, FRAME):
-        frame, name, n1, n2 = self._getOps(FRAME, self.args)
+        frame, name, n1, n2 = self._getOps(FRAME, *self.args)
         if n2 == 0:
             exit(57) # error - attempting to devide by 0
         else:
@@ -132,53 +131,54 @@ class Idiv(Instruction):
 
 class Lt(Instruction):
     def execute(self, FRAME):
-        frame, name, n1, n2 = self._getOps(FRAME, self.args)
+        frame, name, n1, n2 = self._getOps(FRAME, *self.args)
         frame.save(name, n1 < n2)
 
 class Gt(Instruction):
     def execute(self, FRAME):
-        frame, name, n1, n2 = self._getOps(FRAME, self.args)
+        frame, name, n1, n2 = self._getOps(FRAME, *self.args)
         frame.save(name, n1 > n2)
 
 class Eq(Instruction):
     def execute(self, FRAME):
-        frame, name, n1, n2 = self._getOps(FRAME, self.args)
+        frame, name, n1, n2 = self._getOps(FRAME, *self.args)
         frame.save(name, n1 == n2)
 
 class And(Instruction):
     def execute(self, FRAME):
-        frame, name, n1, n2 = self._getOps(FRAME, self.args)
+        frame, name, n1, n2 = self._getOps(FRAME, *self.args)
         frame.save(name, n1 and n2)
 
 class Or(Instruction):
     def execute(self, FRAME):
-        frame, name, n1, n2 = self._getOps(FRAME, self.args)
+        frame, name, n1, n2 = self._getOps(FRAME, *self.args)
         frame.save(name, n1 or n2)
 
 class Not(Instruction):
     def execute(self, FRAME):
-        frame, name, n1, _ = self._getOps(FRAME, self.args)
+        frame, name, n1, _ = self._getOps(FRAME, *self.args)
         frame.save(name, not n1)
 
 class Int2char(Instruction):
     def execute(self, FRAME):
-        frame, name, n1, _ = self._getOps(FRAME, self.args)
+        frame, name, n1, _ = self._getOps(FRAME, *self.args)
         frame.save(name, f"{n1}")
 
 class Stri2int(Instruction):
     def execute(self, FRAME):
-        frame, name, n1, n2 = self._getOps(FRAME, self.args)
+        frame, name, n1, n2 = self._getOps(FRAME, *self.args)
         frame.save(name, ord(n1[n2]))
 
 class Read(Instruction):
     def execute(self, FRAME, IO):
         frame, name = FRAME.getFrame(self.args[0].text)
-        type = self.args[1].text
+        t = self.args[1].text
         val = IO.readOne()
-        if type == "int":
-            val = int(val)
-        elif type == "bool":
-            val = False if val.lower() == "false" else True
+        if val:
+            if t == "int":
+                val = int(val)
+            elif t == "bool":
+                val = True if val.lower() == "true" else False
         frame.save(name, val)
 
 class Write(Instruction):
@@ -192,22 +192,22 @@ class Write(Instruction):
 
 class Concat(Instruction):
     def execute(self, FRAME):
-        frame, name, n1, n2 = self._getOps(FRAME, self.args)
+        frame, name, n1, n2 = self._getOps(FRAME, *self.args)
         frame.save(name, f"{n1}{n2}")
 
 class Strlen(Instruction):
     def execute(self, FRAME):
-        frame, name, n1, _ = self._getOps(FRAME, self.args)
+        frame, name, n1, _ = self._getOps(FRAME, *self.args)
         frame.save(name, len(n1))
 
 class Getchar(Instruction):
     def execute(self, FRAME):
-        frame, name, n1, n2 = self._getOps(FRAME, self.args)
+        frame, name, n1, n2 = self._getOps(FRAME, *self.args)
         frame.save(name, n1[n2])
 
 class Setchar(Instruction):
     def execute(self, FRAME):
-        frame, name, n1, n2 = self._getOps(FRAME, self.args)
+        frame, name, n1, n2 = self._getOps(FRAME, *self.args)
         orig = FRAME.getVal(name)
         newVal = orig
         newVal[n1] = n2[0]
@@ -215,8 +215,19 @@ class Setchar(Instruction):
 
 class Type(Instruction):
     def execute(self, FRAME):
-        frame, name, _, _ = self._getOps(FRAME, self.args)
-        frame.save(name, self.args[1].get("type"))
+        frame, name = FRAME.getFrame(self.args[0].text)
+        t = self.args[1].get("type")
+        if (t == "var"):
+            t = str(type(FRAME.getVal(self.args[1].text)))
+            if re.search(r"int", t):
+                t = "int"
+            elif re.search(r"str", t):
+                t = "string"
+            elif re.search(r"bool", t):
+                t = "bool"
+            elif re.search(r"NoneType", t):
+                t = "nil"
+        frame.save(name, t)
 
 class Label(Instruction):
     pass # its parsed in FrameManager constructor 
@@ -227,13 +238,13 @@ class Jump(Instruction):
 
 class Jumpifeq(Instruction):
     def execute(self, FRAME, FLOW):
-        label, _, n1, n2 = self._getOps(FRAME, self.args)
+        label, _, n1, n2 = self._getOps(FRAME, *self.args)
         if (n1 == n2 and self.args[1].get("type") == self.args[2].get("type")):
             FLOW.jump(label)
 
 class Jumpifneq(Instruction):
     def execute(self, FRAME, FLOW):
-        label, _, n1, n2 = self._getOps(FRAME, self.args)
+        label, _, n1, n2 = self._getOps(FRAME, *self.args)
         if (n1 != n2 or self.args[1].get("type") != self.args[2].get("type")):
             FLOW.jump(label)
 
@@ -247,7 +258,7 @@ class Exit(Instruction):
 
 class Dprint(Instruction):
     def execute(self, FRAME, IO):
-        _, _, n1, _ = self._getOps(FRAME, self.args[0])
+        _, _, n1, _ = self._getOps(FRAME, *self.args[0])
         IO.write(n1)
 
 class Break(Instruction):

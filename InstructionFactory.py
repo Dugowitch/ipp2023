@@ -2,7 +2,7 @@ from Instruction import *
 
 class InstructionFactory:
     requirements = {
-        "FRAME": ["MOVE", "CREATEFRAME", "PUSHFRAME", "POPFRAME", "DEFVAR", "PUSHS", "POPS", "ADD", "SUB", "MUL", "IDIV", "LT", "GT", "EQ", "AND", "OR", "NOT", "INT2CHAR", "STRI2INT", "READ", "WRITE", "CONTACT", "STRLEN", "GETCHAR", "SETCHAR", "TYPE", "DPRINT", "BREAK"],
+        "FRAME": ["MOVE", "CREATEFRAME", "PUSHFRAME", "POPFRAME", "DEFVAR", "PUSHS", "POPS", "ADD", "SUB", "MUL", "IDIV", "LT", "GT", "EQ", "AND", "OR", "NOT", "INT2CHAR", "STRI2INT", "READ", "WRITE", "CONCAT", "STRLEN", "GETCHAR", "SETCHAR", "TYPE", "DPRINT", "BREAK"],
         "FLOW": ["CALL", "RETURN", "LABEL", "JUMP", "JUMPIFEQ", "JUMPIFNEQ", "EXIT", "BREAK"],
         "IO": ["READ", "WRITE", "DPRINT", "BREAK"],
         "STACK": ["PUSHS", "POPS"]
@@ -78,7 +78,7 @@ class InstructionFactory:
         elif (ins.get("opcode") == "WRITE"):
             return Write(ins)
 
-        elif (ins.get("opcode") == "CONTACT"):
+        elif (ins.get("opcode") == "CONCAT"):
             return Concat(ins)
 
         elif (ins.get("opcode") == "STRLEN"):
