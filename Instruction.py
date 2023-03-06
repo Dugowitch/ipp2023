@@ -48,7 +48,7 @@ class Move(Instruction):
                     newVal = src.text
             frame.save(name, newVal)
         else:
-            print("> exitting in Move.execute() - incorrect number of arguments") # TODO: remove
+            print("> exitting in Move.execute() - incorrect number of arguments") # REMOVE
             exit(52) # error - incorrect number of args
 
 class Createframe(Instruction):
@@ -91,7 +91,7 @@ class Pops(Instruction):
             frame, name = FRAME.getFrame(self.args[0].text)
             frame.save(name, STACK.pop())
         else:
-            print("> exitting in Pops.execute() - incorrect number of arguments") # TODO: remove
+            print("> exitting in Pops.execute() - incorrect number of arguments") # REMOVE
             exit(52) # error - incorrect number of args
 
 class Add(Instruction):
@@ -230,7 +230,7 @@ class Type(Instruction):
         frame.save(name, t)
 
 class Label(Instruction):
-    pass # its parsed in FrameManager constructor 
+    pass # its parsed in FrameManager constructor # TODO
 
 class Jump(Instruction):
     def execute(self, FLOW):
@@ -262,6 +262,43 @@ class Dprint(Instruction):
         IO.write(n1)
 
 class Break(Instruction):
-    pass # TODO
+    def execute(self, FRAME, FLOW, IO):
+        IO.write(f"BREAK: ins #{FLOW.ip} - {self.opcode}\n", 1);
+        self.__printFrames(FRAME, IO)
+
+    def __printFrames(self, FRAME, IO):
+        if FRAME.GF != None:
+            self.__printFrame(FRAME.GF.vars, IO, "GF")
+        else:
+            self.__printFrame({}, IO, "GF")
+
+        if FRAME.TF != None:
+            self.__printFrame(FRAME.TF.vars, IO, "TF")
+        else:
+            self.__printFrame({}, IO, "TF")
+        
+        if FRAME.LF != []:
+            self.__printFrame(FRAME.LF[0].vars, IO, "LF")
+        else:
+            self.__printFrame({}, IO, "LF")
+
+
+    def __printFrame(self, frame, IO, name):
+        IO.write(f"{name} = ", 1);
+        IO.write("{ ", 1)
+        isfirst = 1
+        for key, val in frame.items():
+            if isfirst:
+                isfirst = 0
+            else:
+                IO.write(", ", 1)
+            if isinstance(val, str):
+                val = f"\"{val}\""
+            if val == None:
+                val = "nil"
+            IO.write(f"\"{key}\" = {val}", 1);
+        IO.write(" }\n", 1)
+
+    # TODO
     # na standardní chybový výstup (stderr) vypíše stav interpretu (např. pozice
     # v kódu, obsah rámců, počet vykonaných instrukcí) v danou chvíli 

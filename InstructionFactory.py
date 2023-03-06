@@ -115,5 +115,5 @@ class InstructionFactory:
             return Break(ins)
 
         else:
-            print("> exitting in InstructionFactory.gen() - unknown instruction") # TODO: remove
+            print("> exitting in InstructionFactory.gen() - unknown instruction") # REMOVE
             exit(52) # error - unknown instruction

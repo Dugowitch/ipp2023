@@ -15,7 +15,7 @@ class FlowManager:
             self.ip = self._labels[label]
         else:
             print(f"> trying to jump to {label}")
-            print("> exitting in FlowManager.jump() - accessing undefined label") # TODO: remove
+            print("> exitting in FlowManager.jump() - accessing undefined label") # REMOVE
             exit(52) # error - trying to use undefined label
 
     def call(self, label):
