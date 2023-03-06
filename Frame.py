@@ -4,7 +4,7 @@ class Frame:
 
     def defvar(self, name):
         if name in self.vars:
-            print("> exitting in Frame.defvar() - var redefinition") # TODO: remove
+            print("> exitting in Frame.defvar() - var redefinition") # REMOVE
             exit(52) # error - var redefinition
         else:
             self.vars[name] = None;

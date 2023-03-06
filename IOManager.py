@@ -36,7 +36,7 @@ class IOManager:
                 for match in matches:
                     code = re.sub(r"\\0*", "", match)
                     char = chr(int(code))
-                    # print(f"> \'{match}\' {type(match)} -> \'{char}\' {type(char)}") # TODO: remove
+                    # print(f"> \'{match}\' {type(match)} -> \'{char}\' {type(char)}") # REMOVE
                     message = message.replace(match, char)
             elif message == None:
                 message = ""
