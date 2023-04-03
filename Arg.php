@@ -10,8 +10,8 @@ abstract class Arg {
         global $xml;
         if (!preg_match(static::$pattern, $this->arg)){
             // echo $this->arg;
-            // echo static::$pattern."\n"; // TODO: remove
-            // echo "> TU SA TO POKAZILO"; // TODO: remove
+            // echo static::$pattern."\n"; // REMOVE
+            // echo "> TU SA TO POKAZILO"; // REMOVE
             
             exit(23);
         }
@@ -36,7 +36,7 @@ class Variable extends Arg {
 }
 
 class Symbol extends Arg {
-    protected static $pattern = "/^((G|L|T)F@[A-Za-z_\-$&%*!?][A-Za-z_\-$&%*!?0-9]*|int@[\-+]?[0-9]+|bool@(true|false)|nil@nil|string@([^\\\\\s#]|\\\\\d{3})*)$/";
+    protected static $pattern = "/^((G|L|T)F@[A-Za-z_\-$&%*!?][A-Za-z_\-$&%*!?0-9]*|int@[\-+]?([0-9]+|0x[A-Fa-f0-9]+)|bool@(true|false)|nil@nil|string@([^\\\\\s#]|\\\\\d{3})*)$/";
     
     private static function _parseArg($str){
         $parts = explode("@", $str);
