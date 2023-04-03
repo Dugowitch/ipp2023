@@ -40,5 +40,5 @@ class IOManager:
                     message = message.replace(match, char)
             elif message == None:
                 message = ""
-            print(message)
-            # print(message, end="") # TODO: replace the line above by this
+            # print(message)
+            print(message, end="")
