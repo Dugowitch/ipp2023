@@ -112,8 +112,7 @@ class Instruction {
                 break;
 
             default:
-                
-            exit(22); // misspelled or non-existant opcode
+                exit(22); // misspelled or non-existant opcode
                 break;
         }
         return $this;
