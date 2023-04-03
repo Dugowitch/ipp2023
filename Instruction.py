@@ -230,7 +230,7 @@ class Type(Instruction):
         frame.save(name, t)
 
 class Label(Instruction):
-    pass # its parsed in FrameManager constructor # TODO
+    pass # it's parsed in FrameManager constructor
 
 class Jump(Instruction):
     def execute(self, FLOW):
@@ -263,7 +263,7 @@ class Dprint(Instruction):
 
 class Break(Instruction):
     def execute(self, FRAME, FLOW, IO):
-        IO.write(f"BREAK: ins #{FLOW.ip} - {self.opcode}\n", 1);
+        IO.write(f"BREAK: instruction #{FLOW.ip} - {self.opcode}\n", 1);
         self.__printFrames(FRAME, IO)
 
     def __printFrames(self, FRAME, IO):
@@ -298,7 +298,3 @@ class Break(Instruction):
                 val = "nil"
             IO.write(f"\"{key}\" = {val}", 1);
         IO.write(" }\n", 1)
-
-    # TODO
-    # na standardní chybový výstup (stderr) vypíše stav interpretu (např. pozice
-    # v kódu, obsah rámců, počet vykonaných instrukcí) v danou chvíli 
