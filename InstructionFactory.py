@@ -1,3 +1,7 @@
+import FrameManager
+import IOManager
+import StackManager
+import FlowManager
 from Instruction import *
 
 class InstructionFactory:
@@ -8,137 +12,139 @@ class InstructionFactory:
             cls.__instance = super().__new__(cls)
         return cls.__instance
     
-    def getReq(ins):
-        FRAME = FrameManager()
-        FLOW = FlowManager()
-        IO = IOManager()
-        STACK = StackManager()
-        opcode = ins.get("opcode")
-        req_mapping = {
-            "FRAME": ["MOVE", "CREATEFRAME", "PUSHFRAME", "POPFRAME", "DEFVAR", "PUSHS", "POPS", "ADD", "SUB", "MUL", "IDIV", "LT", "GT", "EQ", "AND", "OR", "NOT", "INT2CHAR", "STRI2INT", "READ", "WRITE", "CONCAT", "STRLEN", "GETCHAR", "SETCHAR", "TYPE", "DPRINT", "BREAK", "JUMPIFEQ", "JUMPIFNEQ"],
-            "FLOW": ["CALL", "RETURN", "JUMP", "JUMPIFEQ", "JUMPIFNEQ", "BREAK"],
-            "IO": ["READ", "WRITE", "DPRINT", "BREAK"],
-            "STACK": ["PUSHS", "POPS"]
-        }
-        req = []
+    # def getReq(ins):
+    #     FRAME = FrameManager()
+    #     FLOW = FlowManager()
+    #     IO = IOManager()
+    #     STACK = StackManager()
+    #     opcode = ins.get("opcode").upper()
+    #     req_mapping = {
+    #         "FRAME": ["MOVE", "CREATEFRAME", "PUSHFRAME", "POPFRAME", "DEFVAR", "PUSHS", "POPS", "ADD", "SUB", "MUL", "IDIV", "LT", "GT", "EQ", "AND", "OR", "NOT", "INT2CHAR", "STRI2INT", "READ", "WRITE", "CONCAT", "STRLEN", "GETCHAR", "SETCHAR", "TYPE", "DPRINT", "BREAK", "JUMPIFEQ", "JUMPIFNEQ"],
+    #         "FLOW": ["CALL", "RETURN", "JUMP", "JUMPIFEQ", "JUMPIFNEQ", "BREAK"],
+    #         "IO": ["READ", "WRITE", "DPRINT", "BREAK"],
+    #         "STACK": ["PUSHS", "POPS"]
+    #     }
+    #     req = []
 
-        if (opcode in req_mapping["FRAME"]):
-            req.append(FRAME);
-        if (opcode in req_mapping["FLOW"]):
-            req.append(FLOW);
-        if (opcode in req_mapping["IO"]):
-            req.append(IO);
-        if (opcode in req_mapping["STACK"]):
-            req.append(STACK);
+    #     if (opcode in req_mapping["FRAME"]):
+    #         req.append(FRAME);
+    #     if (opcode in req_mapping["FLOW"]):
+    #         req.append(FLOW);
+    #     if (opcode in req_mapping["IO"]):
+    #         req.append(IO);
+    #     if (opcode in req_mapping["STACK"]):
+    #         req.append(STACK);
 
-        return req
+    #     return req
 
     def gen(self, ins):
-        if (ins.get("opcode") == "MOVE"):
+        opcode = ins.get("opcode").upper()
+        
+        if (opcode == "MOVE"):
             return Move(ins)
 
-        elif (ins.get("opcode") == "CREATEFRAME"):
+        elif (opcode == "CREATEFRAME"):
             return Createframe(ins)
 
-        elif (ins.get("opcode") == "PUSHFRAME"):
+        elif (opcode == "PUSHFRAME"):
             return Pushframe(ins)
 
-        elif (ins.get("opcode") == "POPFRAME"):
+        elif (opcode == "POPFRAME"):
             return Popframe(ins)
 
-        elif (ins.get("opcode") == "DEFVAR"):
+        elif (opcode == "DEFVAR"):
             return Defvar(ins)
 
-        elif (ins.get("opcode") == "CALL"):
+        elif (opcode == "CALL"):
             return Call(ins)
 
-        elif (ins.get("opcode") == "RETURN"):
+        elif (opcode == "RETURN"):
             return Return(ins)
 
-        elif (ins.get("opcode") == "PUSHS"):
+        elif (opcode == "PUSHS"):
             return Pushs(ins)
 
-        elif (ins.get("opcode") == "POPS"):
+        elif (opcode == "POPS"):
             return Pops(ins)
 
-        elif (ins.get("opcode") == "ADD"):
+        elif (opcode == "ADD"):
             return Add(ins)
 
-        elif (ins.get("opcode") == "SUB"):
+        elif (opcode == "SUB"):
             return Sub(ins)
 
-        elif (ins.get("opcode") == "MUL"):
+        elif (opcode == "MUL"):
             return Mul(ins)
 
-        elif (ins.get("opcode") == "IDIV"):
+        elif (opcode == "IDIV"):
             return Idiv(ins)
 
-        elif (ins.get("opcode") == "LT"):
+        elif (opcode == "LT"):
             return Lt(ins)
 
-        elif (ins.get("opcode") == "GT"):
+        elif (opcode == "GT"):
             return Gt(ins)
 
-        elif (ins.get("opcode") == "EQ"):
+        elif (opcode == "EQ"):
             return Eq(ins)
 
-        elif (ins.get("opcode") == "AND"):
+        elif (opcode == "AND"):
             return And(ins)
 
-        elif (ins.get("opcode") == "OR"):
+        elif (opcode == "OR"):
             return Or(ins)
 
-        elif (ins.get("opcode") == "NOT"):
+        elif (opcode == "NOT"):
             return Not(ins)
 
-        elif (ins.get("opcode") == "INT2CHAR"):
+        elif (opcode == "INT2CHAR"):
             return Int2char(ins)
 
-        elif (ins.get("opcode") == "STRI2INT"):
+        elif (opcode == "STRI2INT"):
             return Stri2int(ins)
 
-        elif (ins.get("opcode") == "READ"):
+        elif (opcode == "READ"):
             return Read(ins)
 
-        elif (ins.get("opcode") == "WRITE"):
+        elif (opcode == "WRITE"):
             return Write(ins)
 
-        elif (ins.get("opcode") == "CONCAT"):
+        elif (opcode == "CONCAT"):
             return Concat(ins)
 
-        elif (ins.get("opcode") == "STRLEN"):
+        elif (opcode == "STRLEN"):
             return Strlen(ins)
 
-        elif (ins.get("opcode") == "GETCHAR"):
+        elif (opcode == "GETCHAR"):
             return Getchar(ins)
 
-        elif (ins.get("opcode") == "SETCHAR"):
+        elif (opcode == "SETCHAR"):
             return Setchar(ins)
 
-        elif (ins.get("opcode") == "TYPE"):
+        elif (opcode == "TYPE"):
             return Type(ins)
 
-        elif (ins.get("opcode") == "LABEL"):
+        elif (opcode == "LABEL"):
             return Label(ins)
 
-        elif (ins.get("opcode") == "JUMP"):
+        elif (opcode == "JUMP"):
             return Jump(ins)
 
-        elif (ins.get("opcode") == "JUMPIFEQ"):
+        elif (opcode == "JUMPIFEQ"):
             return Jumpifeq(ins)
 
-        elif (ins.get("opcode") == "JUMPIFNEQ"):
+        elif (opcode == "JUMPIFNEQ"):
             return Jumpifneq(ins)
 
-        elif (ins.get("opcode") == "EXIT"):
+        elif (opcode == "EXIT"):
             return Exit(ins)
 
-        elif (ins.get("opcode") == "DPRINT"):
+        elif (opcode == "DPRINT"):
             return Dprint(ins)
 
-        elif (ins.get("opcode") == "BREAK"):
+        elif (opcode == "BREAK"):
             return Break(ins)
 
         else:
             # print("> exitting in InstructionFactory.gen() - unknown instruction") # REMOVE
-            exit(52) # error - unknown instruction
+            exit(32) # error - unknown instruction

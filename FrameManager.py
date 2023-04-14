@@ -14,17 +14,17 @@ class FrameManager:
         self.LF = [];
 
     def pushframe(self):
-        if self.TF != None:
-            self.LF.append(self.TF)
-            self.TF = None
-        else:
+        if self.TF == None:
             exit(55) # error - frame does not exist
 
+        self.LF.append(self.TF)
+        self.TF = None
+
     def popframe(self):
-        if self.LF != []:
-            self.TF = self.LF.pop()
-        else:
+        if self.LF == []:
             exit(55) # error - frame stack is empty
+
+        self.TF = self.LF.pop()
 
     def createframe(self):
         self.TF = Frame()
@@ -34,23 +34,31 @@ class FrameManager:
         return frame.getVal(name)
 
     def getFrame(self, var):
-        frame, name = var.split("@")
-        # Set frame
-        if frame == "LF":
-            frame = self.currentLF
-        elif frame == "TF":
-            frame = self.TF
-        elif frame == "GF":
-            frame = self.GF
+        frame_mapping = {
+            "LF": self.currentLF,
+            "TF": self.TF,
+            "GF": self.GF
+        }
 
-        if frame == None or frame == []:
+        # check var value, split into parts
+        if "@" not in var:
+            exit(57) # wrong operand value
+        frame, name = var.split("@")
+        if frame not in frame_mapping.keys():
+            exit(57) # frame of this type does not exist - wrong operand value
+
+        # get frame
+        frame = frame_mapping[frame]
+
+        # check frame
+        if frame == None:
             exit(55) # frame does not exist
 
         return frame, name
 
     @property
     def currentLF(self):
-        if self.LF != []:
-            return self.LF[-1]
-        else:
-            exit(55) # error - frame does not exist
+        if self.LF == []:
+            return None
+
+        return self.LF[-1]

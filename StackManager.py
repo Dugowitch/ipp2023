@@ -13,4 +13,7 @@ class StackManager:
         self.stack.append(symb)
 
     def pop(self):
+        if self.stack == []:
+            exit(56) # missing stack item
+
         return self.stack.pop()

@@ -17,7 +17,7 @@ class FlowManager:
 
         AP = ArgParser()
 
-        # loop over all instructions, save labels, and map order 
+        # loop over all instructions, save labels, and map order
         for i, ins in enumerate(AP.root):
             order = int(ins.get("order")) # this should never raise an exception since it's checked in XMLManager
             opcode = ins.get("opcode")
@@ -56,19 +56,17 @@ class FlowManager:
         return XML.getIns(xml_index)
 
     def jump(self, label):
-        if label in self._labels:
-            self.ip = self._labels[label]
-        else:
-            # print(f"> trying to jump to {label}") # REMOVE
-            # print("> exitting in FlowManager.jump() - accessing undefined label") # REMOVE
+        if label not in self._labels:
             exit(52) # error - trying to use undefined label
+
+        self.ip = self._labels[label]
 
     def call(self, label):
         self._callstack.append(self.ip)
         self.jump(label)
 
     def ret(self):
-        if self._callstack != []:
-            self.ip = self._callstack.pop()
-        else:
+        if self._callstack == []:
             exit(56) # error - missing callstack value
+
+        self.ip = self._callstack.pop()

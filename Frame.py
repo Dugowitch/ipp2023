@@ -4,19 +4,18 @@ class Frame:
 
     def defvar(self, name):
         if name in self.vars:
-            # print("> exitting in Frame.defvar() - var redefinition") # REMOVE
-            exit(52) # error - var redefinition
-        else:
-            self.vars[name] = None;
+            exit(52) # variable redefinition
+
+        self.vars[name] = None;
 
     def save(self, name, value):
         if name not in self.vars:
-            exit(54) # error - assignment to undefined variable
-        else:
-            self.vars[name] = value
+            exit(54) # assignment to undefined variable
+            
+        self.vars[name] = value
 
     def getVal(self, name):
-        if name in self.vars:
-            return self.vars[name]
-        else:
-            exit(54) # error - accessing undefined variable
+        if name not in self.vars:
+            exit(54) # accessing undefined variable
+
+        return self.vars[name]
