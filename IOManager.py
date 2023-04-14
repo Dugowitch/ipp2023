@@ -1,18 +1,20 @@
-import sys
+from sys import stdin, stdout, stderr
 import re
+import ArgParser
 
 class IOManager:
     __instance = None
 
-    def __new__(cls, ARGS):
+    def __new__(cls):
         if cls.__instance == None:
             cls.__instance = super().__new__(cls)
         return cls.__instance
 
-    def __init__(self, ARGS):
+    def __init__(self):
         self.INPUT = None
-        if ARGS.input:
-            self.INPUT = open(ARGS.input, "r")
+        AP = ArgParser()
+        if AP.input:
+            self.INPUT = open(AP.input, "r")
 
     def __del__(self):
         if self.INPUT:
@@ -27,18 +29,22 @@ class IOManager:
                 text = input()
         except EOFError:
             pass
+        
         if (text == ""):
             text = None
+        
         return text
 
     def read(self):
-        return sys.stdin.read()
+        return stdin.read()
     
     def write(self, message, isError = False):
+        out_file = stdout
+        
         if isError:
-            print(message, file=sys.stderr, end="")
+            out_file = stderr
         else:
-            if isinstance(message, str):
+            if isinstance(message, str): # parse escape sequences
                 matches = re.findall(r"\\[0-9]{3}", message)
                 for match in matches:
                     code = re.sub(r"\\0*", "", match)
@@ -51,5 +57,5 @@ class IOManager:
                 message = "true"
             elif message == False:
                 message = "false"
-            # print(message)
-            print(message, end="")
+
+        print(message, file=out_file, end="")

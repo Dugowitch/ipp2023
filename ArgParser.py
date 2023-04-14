@@ -12,21 +12,32 @@ class ArgParser:
     def __init__(self):
         self.source = None
         self.input = None
+
         if (len(argv) < 2):
-            exit(10) # missing arg - error 10
+            exit(10) # missing parameter or forbidden combination
+
         for arg in argv:
-            parts = arg.split("=")
-            if (parts[0] in ["--help", "-h"]):
-                if (len(argv) > 2):
-                    exit(10) # invalid arg combination - error 10
-                    pass
-                else:
-                    print("Usage: python3.10 interpret.py [--source=SOURCE_FILE] [--input=INPUT_FILE]")
-                    print("    -h, --help\tprints this help message")
-                    print("    --source=SOURCE_FILE\tspecifies source file")
-                    print("    --input=INPUT_FILE\tspecifies input file")
-                    print("At least SOURCE_FILE or INPUT_FILE has to be given, the other is loaded from STDIN if not specified.")
-            elif (parts[0] == "--source"):
-                self.source = sub("\"", "", parts[1])
-            elif (parts[0] == "--input"):
-                self.input = sub("\"", "", parts[1])
+            ALLOWED_ARGS = ["--help", "-h", "--source", "--input"]
+
+            if arg == "interpret.py":
+                continue
+
+            if "=" not in arg:
+                # there is no error for incorrect parameter format so the closest one is used
+                exit(10) # missing parameter or forbidden combination
+
+            name, value = arg.split("=")
+
+            if (name not in ALLOWED_ARGS) or (name in ALLOWED_ARGS[:2] and len(argv) > 2):
+                exit(10) # missing parameter or forbidden combination
+
+            if (name in ALLOWED_ARGS[:2]):
+                print("Usage: python3.10 interpret.py [--source=SOURCE_FILE] [--input=INPUT_FILE]")
+                print("    -h, --help\tprints this help message")
+                print("    --source=SOURCE_FILE\tspecifies source file")
+                print("    --input=INPUT_FILE\tspecifies input file")
+                print("At least SOURCE_FILE or INPUT_FILE has to be given, the other is loaded from STDIN if not specified.")
+            elif (name == "--source"):
+                self.source = sub("\"", "", value)
+            elif (name == "--input"):
+                self.input = sub("\"", "", value)

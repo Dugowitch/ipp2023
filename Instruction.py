@@ -1,5 +1,11 @@
 from abc import ABC, abstractmethod
+from FrameManager import FrameManager
+from FlowManager import FlowManager
+from IOManager import IOManager
+from StackManager import StackManager
+
 import re
+
 
 class Instruction(ABC):
     def __init__(self, ins):

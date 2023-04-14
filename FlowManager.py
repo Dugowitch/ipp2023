@@ -1,50 +1,59 @@
-import xml.etree.ElementTree as ET
+import ArgParser
+import XMLManager
+
 class FlowManager:
     __instance = None
 
-    def __new__(cls, source):
+    def __new__(cls):
         if cls.__instance == None:
             cls.__instance = super().__new__(cls)
         return cls.__instance
 
-    def __init__(self, root):
-        self.ip = 0
+    def __init__(self):
+        self.ip = 0 # instruction pointer
         self._labels = {}
         self._callstack = []
         self._orderMapping = {}
-        # loop over all instructions and save labels
-        for i, ins in enumerate(root):
-            try:
-                order = int(ins.get("order"))
-            except ValueError:
-                exit(32)
-            except TypeError:
+
+        AP = ArgParser()
+
+        # loop over all instructions, save labels, and map order 
+        for i, ins in enumerate(AP.root):
+            order = int(ins.get("order")) # this should never raise an exception since it's checked in XMLManager
+            opcode = ins.get("opcode")
+
+            # more instructions with the same order or an instruction with not positive order
+            if order in self._orderMapping or order <= 0:
                 exit(32)
 
-            if order in self._orderMapping:
-                exit(32)
-            elif order <= 0:
-                exit(32)
-            self._orderMapping[int(ins.get("order"))] = i
+            self._orderMapping[order] = i
 
-            if (ins.get("opcode") == "LABEL"):
+            if opcode == "LABEL":
                 for arg in ins:
-                    if arg.text not in self._labels:
-                        # self._labels[arg.text] = int(ins.get("order"))
-                        self._labels[arg.text] = i
-                    else:
-                        exit(52)
+                    if arg.text in self._labels:
+                        exit(52) # label redefinition
+
+                    # self._labels[arg.text] = int(ins.get("order")) # REMOVE
+                    self._labels[arg.text] = i
+
             # print(self._orderMapping) # REMOVE
             # print(self._orderMapping.keys()) # REMOVE
 
-    def getIp(self):
+    def getNextIns(self):
         self.ip += 1
+
+        # check end conditions
+        if self._orderMapping == {} or self.ip > len(self._orderMapping):
+            return None
+
+        # determine index in XML
         index = list(self._orderMapping.keys())
         index.sort()
-        # print(f"> idx: {index}") # REMOVE
-        # print(f"> ip: {self.ip - 1}") # REMOVE
-        # print(f"> ord: {index[self.ip - 1]}") # REMOVE
-        return self._orderMapping[index[self.ip - 1]]
+        xml_index = self._orderMapping[index[self.ip - 1]]
+
+        # return <instruction> element
+        XML = XMLManager()
+        return XML.getIns(xml_index)
 
     def jump(self, label):
         if label in self._labels:
