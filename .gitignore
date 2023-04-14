@@ -6,4 +6,5 @@ __pycache__/
 *.jar
 tests/
 tests2/
+test.php
 *.tgz
