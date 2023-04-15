@@ -1,4 +1,4 @@
-from sys import argv
+from sys import argv, stderr
 from re import sub
 
 class ArgParser:
@@ -14,6 +14,7 @@ class ArgParser:
         self.input = None
 
         if (len(argv) < 2):
+            stderr.write("> Argparser: missing parameter\n")
             exit(10) # missing parameter or forbidden combination
 
         for arg in argv:
@@ -24,11 +25,13 @@ class ArgParser:
 
             if "=" not in arg:
                 # there is no error for incorrect parameter format so the closest one is used
+                stderr.write("> Argparser: missing '=' in parameter\n")
                 exit(10) # missing parameter or forbidden combination
 
             name, value = arg.split("=")
 
             if (name not in ALLOWED_ARGS) or (name in ALLOWED_ARGS[:2] and len(argv) > 2):
+                stderr.write("> Argparser: forbidden parameter combination\n")
                 exit(10) # missing parameter or forbidden combination
 
             if (name in ALLOWED_ARGS[:2]):
@@ -41,3 +44,7 @@ class ArgParser:
                 self.source = sub("\"", "", value)
             elif (name == "--input"):
                 self.input = sub("\"", "", value)
+
+    @staticmethod
+    def getInstance():
+        return __class__.__instance

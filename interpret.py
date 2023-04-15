@@ -1,9 +1,25 @@
-import FlowManager
-import InstructionFactory
+from ArgParser import ArgParser
+from FlowManager import FlowManager
+from FrameManager import FrameManager
+from IOManager import IOManager
+from InstructionFactory import InstructionFactory
+from StackManager import StackManager
+from XMLManager import XMLManager
+
+from sys import stderr
+
 
 def interpret():
-    FLOW = FlowManager()
-    IF = InstructionFactory()
+    ArgParser()
+    IOManager()
+    XMLManager()
+    FlowManager()
+    FrameManager()
+    StackManager()
+    InstructionFactory()
+    
+    FLOW = FlowManager.getInstance()
+    IF = InstructionFactory.getInstance()
 
     while (True):
         curr = FLOW.getNextIns()
@@ -11,9 +27,8 @@ def interpret():
         if curr == None:
             break
         
-        # req = IF.getReq(curr)
         ins = IF.gen(curr)
-        # ins.execute(*req)
+        # stderr.write(f"> interpret(): {ins}\n") # REMOVE
         ins.execute()
         
 interpret()

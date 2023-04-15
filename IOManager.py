@@ -1,6 +1,6 @@
 from sys import stdin, stdout, stderr
 import re
-import ArgParser
+from ArgParser import ArgParser
 
 class IOManager:
     __instance = None
@@ -12,9 +12,13 @@ class IOManager:
 
     def __init__(self):
         self.INPUT = None
-        AP = ArgParser()
+        AP = ArgParser.getInstance()
         if AP.input:
             self.INPUT = open(AP.input, "r")
+
+    @staticmethod
+    def getInstance():
+        return __class__.__instance
 
     def __del__(self):
         if self.INPUT:
@@ -53,9 +57,7 @@ class IOManager:
                     message = message.replace(match, char)
             elif message == None:
                 message = ""
-            elif message == True:
-                message = "true"
-            elif message == False:
-                message = "false"
+            elif isinstance(message, bool):
+                message = "true" if message == True else "false"
 
         print(message, file=out_file, end="")

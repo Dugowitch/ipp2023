@@ -1,8 +1,5 @@
-import FrameManager
-import IOManager
-import StackManager
-import FlowManager
 from Instruction import *
+from sys import stderr
 
 class InstructionFactory:
     __instance = None
@@ -11,12 +8,16 @@ class InstructionFactory:
         if cls.__instance == None:
             cls.__instance = super().__new__(cls)
         return cls.__instance
+
+    @staticmethod
+    def getInstance():
+        return __class__.__instance
     
     # def getReq(ins):
-    #     FRAME = FrameManager()
-    #     FLOW = FlowManager()
-    #     IO = IOManager()
-    #     STACK = StackManager()
+    #     FRAME = FrameManager.getInstance()
+    #     FLOW = FlowManager.getInstance()
+    #     IO = IOManager.getInstance()
+    #     STACK = StackManager.getInstance()
     #     opcode = ins.get("opcode").upper()
     #     req_mapping = {
     #         "FRAME": ["MOVE", "CREATEFRAME", "PUSHFRAME", "POPFRAME", "DEFVAR", "PUSHS", "POPS", "ADD", "SUB", "MUL", "IDIV", "LT", "GT", "EQ", "AND", "OR", "NOT", "INT2CHAR", "STRI2INT", "READ", "WRITE", "CONCAT", "STRLEN", "GETCHAR", "SETCHAR", "TYPE", "DPRINT", "BREAK", "JUMPIFEQ", "JUMPIFNEQ"],
@@ -147,4 +148,5 @@ class InstructionFactory:
 
         else:
             # print("> exitting in InstructionFactory.gen() - unknown instruction") # REMOVE
+            stderr.write("> InstructionFactory: unknown opcode\n")
             exit(32) # error - unknown instruction

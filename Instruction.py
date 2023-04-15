@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
+from sys import stderr
 import re
 
-import FrameManager
-import FlowManager
-import IOManager
-import StackManager
+from FrameManager import FrameManager
+from FlowManager import FlowManager
+from IOManager import IOManager
+from StackManager import StackManager
 
 class Instruction(ABC):
     def __init__(self, ins):
@@ -14,53 +15,66 @@ class Instruction(ABC):
         for arg in ins:
             self.args[arg.tag] = arg
 
-    def _checkArgsText(self, arg_types_list):
-        pattern_mapping = {
-            "int": r"^int@[\-+]?([0-9]+|0x[A-Fa-f0-9]+)$",
-            "bool": r"^bool@(true|false)$",
-            "string": r"^string@([^\\\\\s#]|\\\\\d{3})*$",
-            "nil": r"^nil@nil$",
-            "label": r"^[A-Za-z_\-$&%*!?][A-Za-z_\-$&%*!?0-9]*$",
-            "type": r"^(int|string|bool)$",
-            "var": r"^(G|L|T)F@[A-Za-z_\-$&%*!?][A-Za-z_\-$&%*!?0-9]*$"
-        }
+    # def _checkArgsText(self, arg_types_list):
+    #     pattern_mapping = {
+    #         "int": r"^int@[\-+]?([0-9]+|0x[A-Fa-f0-9]+)$",
+    #         "bool": r"^bool@(true|false)$",
+    #         "string": r"^string@([^\\\\\s#]|\\\\\d{3})*$",
+    #         "nil": r"^nil@nil$",
+    #         "label": r"^[A-Za-z_\-$&%*!?][A-Za-z_\-$&%*!?0-9]*$",
+    #         "type": r"^(int|string|bool)$",
+    #         "var": r"^(G|L|T)F@[A-Za-z_\-$&%*!?][A-Za-z_\-$&%*!?0-9]*$"
+    #     }
 
-        if len(self.args) != len(arg_types_list):
-            # guess this should never happen since parse.php tests syntax, but better be safe
-            exit(32) # unexpected XML structure
+    #     if len(self.args) != len(arg_types_list):
+    #         # guess this should never happen since parse.php tests syntax, but better be safe
+    #         stderr.write("> Instruction: expected args length mismatch (1)\n")
+    #         exit(32) # unexpected XML structure
 
-        for arg in self.args:
-            result = False
-            for arg_type in arg_types_list[arg.tag]:
-                if re.match(pattern_mapping[arg_type], arg.text):
-                    result = True
-                    break
+    #     for arg in self.args:
+    #         arg = self.args[arg]
+    #         result = False
+    #         for arg_type in arg_types_list[arg.tag]:
+    #             if re.match(pattern_mapping[arg_type], arg.text):
+    #                 result = True
+    #                 break
 
-            if not result: exit(57) # wrong operand value
+    #         if not result: 
+    #             stderr.write("> Instruction: operand value does not match regex\n")
+    #             exit(57) # wrong operand value
         
     def _checkSymb(self, symb):
-        if symb.type not in ["var", "int", "bool", "string", "nil"]:
+        if symb.get("type") not in ["var", "int", "bool", "string", "nil"]:
+            stderr.write("> Instruction: wrong symb type\n")
             exit(53) # wrong operand type
 
     def _checkArgsTypes(self, type_lists):
         if len(self.args) != len(type_lists):
+            stderr.write("> Instruction: expected args length mismatch (2)\n")
             exit(32) # unexpected XML structure
         
         for arg in self.args:
+            arg = self.args[arg]
             result = False
-            if arg.type in type_lists[arg.tag]:
+            if arg.get("type") in type_lists[arg.tag]:
                 result = True
-            if not result: exit(53) # wrong operand type
+            if not result:
+                stderr.write("> Instruction: wrong type in type attribute\n")
+                exit(53) # wrong operand type
 
     def _cast(self, arg):
         arg_text = arg.text
         arg_type = arg.get("type")
-        FRAME = FrameManager()
+        FRAME = FrameManager.getInstance()
         n = None
 
         # cast and assign based on type
         if arg_type == "int":
-            n = int(arg_text)
+            try:
+                n = int(arg_text)
+            except (TypeError, ValueError):
+                stderr.write("> Instruction: operand value cannot get cast into int\n")
+                exit(57) # wrong operand value
         elif arg_type == "bool":
             n = True if arg_text.lower() == "true" else False
         elif arg_type in ["string", "label", "type"]:
@@ -72,15 +86,16 @@ class Instruction(ABC):
         return n
     
     def _getAndCheckOps(self, options, instance_class = int, check_class = True):
-        FRAME = FrameManager()
+        FRAME = FrameManager.getInstance()
         n1 = n2 = None
 
         # arg1 is the var for the result of an instruction
         frame, name = FRAME.getFrame(self.args["arg1"].text)
 
         self._checkArgsTypes(options)
-        self._checkArgsText(options)
+        # self._checkArgsText(options)
         for arg in self.args: # warning: arguments can come in any order
+            arg = self.args[arg]
             if arg.tag == "arg1": continue # arg1 is not an operand
 
             n = self._cast(arg)
@@ -93,8 +108,10 @@ class Instruction(ABC):
         if check_class:
             # var might have gotten casted into something else than int
             if not isinstance(n1, instance_class):
+                stderr.write("> Instruction: operand1 value is of wrong type\n")
                 exit(53) # wrong operand type
             if n2 != None and not isinstance(n2, instance_class):
+                stderr.write("> Instruction: operand2 value is of wrong type\n")
                 exit(53) # wrong operand type
 
         return frame, name, n1, n2
@@ -105,59 +122,60 @@ class Instruction(ABC):
 
 class Move(Instruction):
     def execute(self):
-        FRAME = FrameManager()
-        frame, name = FRAME.getFrame(dst.text)
+        FRAME = FrameManager.getInstance()
         newVal = None
         dst = self.args["arg1"]
         src = self.args["arg2"]
-        arg_type = src.get("type")
+        frame, name = FRAME.getFrame(dst.text)
 
         self._checkSymb(src)
-        self._checkArgsText({"arg1": ["var"], "arg2": ["int", "bool", "string", "nil", "var"]})
+        # self._checkArgsText({"arg1": ["var"], "arg2": ["int", "bool", "string", "nil", "var"]})
         newVal = self._cast(src)
 
         frame.save(name, newVal)
 
 class Createframe(Instruction):
     def execute(self):
-        FRAME = FrameManager()
+        FRAME = FrameManager.getInstance()
         FRAME.createframe()
 
 class Pushframe(Instruction):
     def execute(self):
-        FRAME = FrameManager()
+        FRAME = FrameManager.getInstance()
         FRAME.pushframe()
 
 class Popframe(Instruction):
     def execute(self):
-        FRAME = FrameManager()
+        FRAME = FrameManager.getInstance()
         FRAME.popframe()
 
 class Defvar(Instruction):
     def execute(self):
-        FRAME = FrameManager()
-        self._checkArgsText({"arg1": ["var"]})
+        FRAME = FrameManager.getInstance()
+        # self._checkArgsText({"arg1": ["var"]})
+        # stderr.write(f"> Defvar: GF: {FRAME.GF}\n") # REMOVE
+        # stderr.write(f"> Defvar: creating {self.args['arg1'].text}\n") # REMOVE
         frame, name = FRAME.getFrame(self.args["arg1"].text)
         frame.defvar(name)
 
 class Call(Instruction):
     def execute(self):
-        FLOW = FlowManager()
-        self._checkArgsText({"arg1": ["label"]})
+        FLOW = FlowManager.getInstance()
+        # self._checkArgsText({"arg1": ["label"]})
         FLOW.call(self.args["arg1"].text)
 
 class Return(Instruction):
     def execute(self):
-        FLOW = FlowManager()
+        FLOW = FlowManager.getInstance()
         FLOW.ret()
 
 class Pushs(Instruction):
     def execute(self):
-        STACK = StackManager()
+        STACK = StackManager.getInstance()
         arg1 = self.args["arg1"]
         
         self._checkSymb(arg1)
-        self._checkArgsText({"arg1": ["int", "bool", "string", "nil", "var"]})
+        # self._checkArgsText({"arg1": ["int", "bool", "string", "nil", "var"]})
         toPush = self._cast(arg1)
         # REMOVE
         # if self.args["arg1"].get("type") == "var":
@@ -168,11 +186,11 @@ class Pushs(Instruction):
 
 class Pops(Instruction):
     def execute(self):
-        FRAME = FrameManager()
-        STACK = StackManager()
+        FRAME = FrameManager.getInstance()
+        STACK = StackManager.getInstance()
         options = {"arg1": ["var"]}
         self._checkArgsTypes(options)
-        self._checkArgsText(options)
+        # self._checkArgsText(options)
         frame, name = FRAME.getFrame(self.args["arg1"].text)
         frame.save(name, STACK.pop())
 
@@ -199,6 +217,7 @@ class Idiv(Instruction):
         options = {"arg1": ["var"], "arg2": ["var", "int"], "arg3": ["var", "int"]}
         frame, name, n1, n2 = self._getAndCheckOps(options)
         if n2 == 0:
+            stderr.write("> Idiv: attempting to devide by 0\n")
             exit(57) # attempting to devide by 0
         frame.save(name, n1 // n2)
 
@@ -207,6 +226,7 @@ class Lt(Instruction):
         options = {"arg1": ["var"], "arg2": ["var", "int", "bool", "string"], "arg3": ["var", "int", "bool", "string"]}
         frame, name, n1, n2 = self._getAndCheckOps(options, check_class=False)
         if not ((isinstance(n1, int) and isinstance(n2, int)) or (isinstance(n1, bool) and isinstance(n2, bool)) or (isinstance(n1, str) and isinstance(n2, str))):
+            stderr.write("> Lt: wrong operand type combination\n")
             exit(53) # wrong operand type combination
         frame.save(name, n1 < n2)
 
@@ -215,6 +235,7 @@ class Gt(Instruction):
         options = {"arg1": ["var"], "arg2": ["var", "int", "bool", "string"], "arg3": ["var", "int", "bool", "string"]}
         frame, name, n1, n2 = self._getAndCheckOps(options, check_class=False)
         if not ((isinstance(n1, int) and isinstance(n2, int)) or (isinstance(n1, bool) and isinstance(n2, bool)) or (isinstance(n1, str) and isinstance(n2, str))):
+            stderr.write("> Gt: wrong operand type combination\n")
             exit(53) # wrong operand type combination
         frame.save(name, n1 > n2)
 
@@ -223,6 +244,7 @@ class Eq(Instruction):
         options = {"arg1": ["var"], "arg2": ["var", "int", "bool", "string", "nil"], "arg3": ["var", "int", "bool", "string", "nil"]}
         frame, name, n1, n2 = self._getAndCheckOps(options, check_class=False)
         if not ((isinstance(n1, int) and isinstance(n2, int)) or (isinstance(n1, bool) and isinstance(n2, bool)) or (isinstance(n1, str) and isinstance(n2, str) or isinstance(n1, type(None)) or isinstance(n2, type(None)))):
+            stderr.write("> Eq: wrong operand type combination\n")
             exit(53) # wrong operand type combination
         frame.save(name, n1 == n2)
 
@@ -255,17 +277,18 @@ class Stri2int(Instruction):
         options = {"arg1": ["var"], "arg2": ["var", "string"], "arg3": ["var", "int"]}
         frame, name, n1, n2 = self._getAndCheckOps(options, check_class=False)
         if not (isinstance(n1, str) and isinstance(n2, int)):
+            stderr.write("> Stri2Int: wrong operand type\n")
             exit(53) # wrong operand type
         frame.save(name, ord(n1[n2]))
 
 class Read(Instruction):
     def execute(self):
-        FRAME = FrameManager()
-        IO = IOManager()
+        FRAME = FrameManager.getInstance()
+        IO = IOManager.getInstance()
         options = {"arg1": ["var"], "arg2": ["type"]}
 
         self._checkArgsTypes(options)
-        self._checkArgsText(options)
+        # self._checkArgsText(options)
         frame, name = FRAME.getFrame(self.args["arg1"].text)
         t = self.args["arg2"].text
 
@@ -282,12 +305,12 @@ class Read(Instruction):
 
 class Write(Instruction):
     def execute(self):
-        IO = IOManager()
+        IO = IOManager.getInstance()
         message = ""
         options = {"arg1": ["int", "bool", "nil", "string", "var"]}
 
         self._checkArgsTypes(options)
-        self._checkArgsText(options)
+        # self._checkArgsText(options)
         message = self._cast(self.args["arg1"])
 
         IO.write(message)
@@ -310,45 +333,49 @@ class Getchar(Instruction):
         frame, name, n1, n2 = self._getAndCheckOps(options, check_class=False)
 
         if not (isinstance(n1, str) and isinstance(n2, int)):
+            stderr.write("> GetChar: wrong operand type\n")
             exit(53) # wrong operand type
         if n2 < 0 or n2 > len(n1) -1:
+            stderr.write("> GetChar: string index out of bounds\n")
             exit(58) # string index out of bounds
         frame.save(name, n1[n2])
 
 class Setchar(Instruction):
     def execute(self):
-        FRAME = FrameManager()
+        FRAME = FrameManager.getInstance()
         options = {"arg1": ["var"], "arg2": ["var", "int"], "arg3": ["var", "string"]}
         frame, name, n1, n2 = self._getAndCheckOps(options, check_class=False)
         val = FRAME.getVal(name)
 
         if not (isinstance(val, str) and isinstance(n1, int) and isinstance(n2, str)):
+            stderr.write("> Setchar: wrong operand type\n")
             exit(53) # wrong operand type
         if n2 < 0 or n2 > len(val) -1:
+            stderr.write("> Setchar: string index out of bounds\n")
             exit(58) # string index out of bounds
 
         val[n1] = n2[0]
         frame.save(name, val)
 
-# TODO continue here
 class Type(Instruction):
     def execute(self):
-        FRAME = FrameManager()
+        FRAME = FrameManager.getInstance()
         options = {"arg1": ["var"], "arg2": ["int", "bool", "string", "nil", "var"]}
 
         self._checkArgsTypes(options)
-        self._checkArgsText(options)
+        # self._checkArgsText(options)
 
         frame, name = FRAME.getFrame(self.args["arg1"].text)
         val = self._cast(self.args["arg2"])
         t = None
 
-        if isinstance(val, int):
+        # check bool first since bool is a subcalss of int
+        if isinstance(val, bool):
+            t = "bool"
+        elif isinstance(val, int):
             t = "int"
         elif isinstance(val, str):
             t = "string"
-        elif isinstance(val, bool):
-            t = "bool"
         elif isinstance(val, type(None)):
             t = "nil"
         
@@ -360,19 +387,19 @@ class Label(Instruction):
 
 class Jump(Instruction):
     def execute(self):
-        FLOW = FlowManager()
+        FLOW = FlowManager.getInstance()
         options = {"arg1": ["label"]}
         self._checkArgsTypes(options)
-        self._checkArgsText(options)
+        # self._checkArgsText(options)
         FLOW.jump(self.args["arg1"].text)
 
 class Jumpifeq(Instruction):
     def execute(self):
-        FLOW = FlowManager()
+        FLOW = FlowManager.getInstance()
         options = {"arg1": ["label"], "arg2": ["var", "int", "bool", "string", "nil"], "arg3": ["var", "int", "bool", "string", "nil"]}
         
         self._checkArgsTypes(options)
-        self._checkArgsText(options)
+        # self._checkArgsText(options)
         
         n1 = n2 = None
         for arg in self.args: # warning: arguments can come in any order
@@ -386,6 +413,7 @@ class Jumpifeq(Instruction):
                 n2 = n
         
         if not ((isinstance(n1, int) and isinstance(n2, int)) or (isinstance(n1, bool) and isinstance(n2, bool)) or (isinstance(n1, str) and isinstance(n2, str) or isinstance(n1, type(None)) or isinstance(n2, type(None)))):
+            stderr.write("> Jumpifeq: wrong operand type combination\n")
             exit(53) # wrong operand type combination
 
         label = self.args["arg1"].text
@@ -394,11 +422,11 @@ class Jumpifeq(Instruction):
 
 class Jumpifneq(Instruction):
     def execute(self):
-        FLOW = FlowManager()
+        FLOW = FlowManager.getInstance()
         options = {"arg1": ["label"], "arg2": ["var", "int", "bool", "string", "nil"], "arg3": ["var", "int", "bool", "string", "nil"]}
         
         self._checkArgsTypes(options)
-        self._checkArgsText(options)
+        # self._checkArgsText(options)
         
         n1 = n2 = None
         for arg in self.args: # warning: arguments can come in any order
@@ -412,6 +440,7 @@ class Jumpifneq(Instruction):
                 n2 = n
         
         if not ((isinstance(n1, int) and isinstance(n2, int)) or (isinstance(n1, bool) and isinstance(n2, bool)) or (isinstance(n1, str) and isinstance(n2, str) or isinstance(n1, type(None)) or isinstance(n2, type(None)))):
+            stderr.write("> Jumpifneq: wrong operand type combination\n")
             exit(53) # wrong operand type combination
 
         label = self.args["arg1"].text
@@ -423,38 +452,41 @@ class Exit(Instruction):
         options = {"arg1": ["int", "var"]}
 
         self._checkArgsTypes(options)
-        self._checkArgsText(options)
+        # self._checkArgsText(options)
 
         errCode = self._cast(self.args["arg1"])
 
         if not isinstance(errCode, int):
+            stderr.write("> Exit: wrong operand type \n")
             exit(53) # wrong operand type        
         if errCode < 0 or errCode > 49:
+            stderr.write("> Exit: ivalid exit code \n")
             exit(57) # ivalid exit code - wrong operand value
 
         exit(errCode)
 
 class Dprint(Instruction):
     def execute(self):
-        IO = IOManager()
+        IO = IOManager.getInstance()
         message = ""
         options = {"arg1": ["int", "bool", "nil", "string", "var"]}
 
         self._checkArgsTypes(options)
-        self._checkArgsText(options)
+        # self._checkArgsText(options)
         message = self._cast(self.args["arg1"])
 
         IO.write(message, True)
 
 class Break(Instruction):
     def execute(self):
-        IO = IOManager()
+        IO = IOManager.getInstance()
+        FLOW = FlowManager.getInstance()
 
-        IO.write(f"BREAK: instruction #{FLOW.ip} - {self.opcode}\n", 1);
+        IO.write(f"BREAK: instruction #{FLOW.ip +1} - {self.opcode}\n", 1);
         self.__printFrames()
 
     def __printFrames(self):
-        FRAME = FrameManager()
+        FRAME = FrameManager.getInstance()
 
         if FRAME.GF != None:
             self.__printFrame(FRAME.GF.vars, "GF")
@@ -471,9 +503,8 @@ class Break(Instruction):
         else:
             self.__printFrame({}, "LF")
 
-
     def __printFrame(self, frame, name):
-        IO = IOManager()
+        IO = IOManager.getInstance()
         
         dict_name = f"{name} = "
         IO.write(dict_name, 1);

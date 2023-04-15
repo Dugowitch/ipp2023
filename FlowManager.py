@@ -1,5 +1,5 @@
-import ArgParser
-import XMLManager
+from XMLManager import XMLManager
+from sys import stderr
 
 class FlowManager:
     __instance = None
@@ -15,15 +15,16 @@ class FlowManager:
         self._callstack = []
         self._orderMapping = {}
 
-        AP = ArgParser()
+        XML = XMLManager.getInstance()
 
         # loop over all instructions, save labels, and map order
-        for i, ins in enumerate(AP.root):
+        for i, ins in enumerate(XML.root):
             order = int(ins.get("order")) # this should never raise an exception since it's checked in XMLManager
             opcode = ins.get("opcode")
 
             # more instructions with the same order or an instruction with not positive order
             if order in self._orderMapping or order <= 0:
+                stderr.write("> FlowManager: instructions with the same order\n")
                 exit(32)
 
             self._orderMapping[order] = i
@@ -31,6 +32,7 @@ class FlowManager:
             if opcode == "LABEL":
                 for arg in ins:
                     if arg.text in self._labels:
+                        stderr.write("> FlowManager: label redefinition\n")
                         exit(52) # label redefinition
 
                     # self._labels[arg.text] = int(ins.get("order")) # REMOVE
@@ -38,6 +40,10 @@ class FlowManager:
 
             # print(self._orderMapping) # REMOVE
             # print(self._orderMapping.keys()) # REMOVE
+        
+    @staticmethod
+    def getInstance():
+        return __class__.__instance
 
     def getNextIns(self):
         self.ip += 1
@@ -52,12 +58,13 @@ class FlowManager:
         xml_index = self._orderMapping[index[self.ip - 1]]
 
         # return <instruction> element
-        XML = XMLManager()
+        XML = XMLManager.getInstance()
         return XML.getIns(xml_index)
 
     def jump(self, label):
         if label not in self._labels:
-            exit(52) # error - trying to use undefined label
+            stderr.write("> FlowManager: trying to use undefined label\n")
+            exit(52) # trying to use undefined label
 
         self.ip = self._labels[label]
 
@@ -67,6 +74,7 @@ class FlowManager:
 
     def ret(self):
         if self._callstack == []:
-            exit(56) # error - missing callstack value
+            stderr.write("> FlowManager: missing callstack value\n")
+            exit(56) # missing callstack value
 
         self.ip = self._callstack.pop()
