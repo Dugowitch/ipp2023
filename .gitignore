@@ -1,6 +1,5 @@
 .vscode/
 __pycache__/
-*.svg
 *.sh
 *.jar
 tests/
