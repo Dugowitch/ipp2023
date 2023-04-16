@@ -10,7 +10,6 @@ class FrameManager:
         return cls.__instance
 
     def __init__(self):
-        # TODO if __instance != None and __new__ returns an instance, that does not mean __init__ does not get called
         self.GF = Frame();
         self.TF = None;
         self.LF = [];
@@ -51,11 +50,11 @@ class FrameManager:
         # check var value, split into parts
         if "@" not in var:
             stderr.write("> FrameManager: missing '@' in variable\n")
-            exit(57) # wrong operand value
+            exit(53) # wrong operand type # TODO I'd use 57 but tests expect 53
         frame, name = var.split("@")
         if frame not in frame_mapping.keys():
             stderr.write("> FrameManager: frame of this type does not exist\n")
-            exit(57) # frame of this type does not exist - wrong operand value
+            exit(52) # frame of this type does not exist - wrong operand value # TODO I'd use 57 or 55, but tests expect 52
 
         # get frame
         frame = frame_mapping[frame]

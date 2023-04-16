@@ -13,6 +13,9 @@ class Instruction(ABC):
         self.args = {}
 
         for arg in ins:
+            if arg.tag in self.args:
+                exit(32) # duplicit arg order
+
             self.args[arg.tag] = arg
 
     # def _checkArgsText(self, arg_types_list):
@@ -50,7 +53,7 @@ class Instruction(ABC):
 
     def _checkArgsTypes(self, type_lists):
         if len(self.args) != len(type_lists):
-            stderr.write("> Instruction: expected args length mismatch (2)\n")
+            stderr.write("> Instruction: expected args length mismatch\n")
             exit(32) # unexpected XML structure
         
         for arg in self.args:
@@ -85,7 +88,7 @@ class Instruction(ABC):
 
         return n
     
-    def _getAndCheckOps(self, options, instance_class = int, check_class = True):
+    def _getAndCheckOps(self, options, param_count = 2, instance_class = int, check_class = True):
         FRAME = FrameManager.getInstance()
         n1 = n2 = None
 
@@ -107,12 +110,13 @@ class Instruction(ABC):
 
         if check_class:
             # var might have gotten casted into something else than int
-            if not isinstance(n1, instance_class):
+            if (not isinstance(n1, instance_class)) or (instance_class == int and isinstance(n1, bool)):
                 stderr.write("> Instruction: operand1 value is of wrong type\n")
                 exit(53) # wrong operand type
-            if n2 != None and not isinstance(n2, instance_class):
-                stderr.write("> Instruction: operand2 value is of wrong type\n")
-                exit(53) # wrong operand type
+            if param_count == 2:
+                if (not isinstance(n2, instance_class)) or (instance_class == int and isinstance(n2, bool)):
+                    stderr.write("> Instruction: operand2 value is of wrong type\n")
+                    exit(53) # wrong operand type
 
         return frame, name, n1, n2
     
@@ -225,7 +229,7 @@ class Lt(Instruction):
     def execute(self):
         options = {"arg1": ["var"], "arg2": ["var", "int", "bool", "string"], "arg3": ["var", "int", "bool", "string"]}
         frame, name, n1, n2 = self._getAndCheckOps(options, check_class=False)
-        if not ((isinstance(n1, int) and isinstance(n2, int)) or (isinstance(n1, bool) and isinstance(n2, bool)) or (isinstance(n1, str) and isinstance(n2, str))):
+        if not (((isinstance(n1, int) and not isinstance(n1, bool)) and (isinstance(n2, int) and not isinstance(n2, bool))) or (isinstance(n1, bool) and isinstance(n2, bool)) or (isinstance(n1, str) and isinstance(n2, str))):
             stderr.write("> Lt: wrong operand type combination\n")
             exit(53) # wrong operand type combination
         frame.save(name, n1 < n2)
@@ -234,7 +238,7 @@ class Gt(Instruction):
     def execute(self):
         options = {"arg1": ["var"], "arg2": ["var", "int", "bool", "string"], "arg3": ["var", "int", "bool", "string"]}
         frame, name, n1, n2 = self._getAndCheckOps(options, check_class=False)
-        if not ((isinstance(n1, int) and isinstance(n2, int)) or (isinstance(n1, bool) and isinstance(n2, bool)) or (isinstance(n1, str) and isinstance(n2, str))):
+        if not (((isinstance(n1, int) and not isinstance(n1, bool)) and (isinstance(n2, int) and not isinstance(n2, bool))) or (isinstance(n1, bool) and isinstance(n2, bool)) or (isinstance(n1, str) and isinstance(n2, str))):
             stderr.write("> Gt: wrong operand type combination\n")
             exit(53) # wrong operand type combination
         frame.save(name, n1 > n2)
@@ -243,7 +247,7 @@ class Eq(Instruction):
     def execute(self):
         options = {"arg1": ["var"], "arg2": ["var", "int", "bool", "string", "nil"], "arg3": ["var", "int", "bool", "string", "nil"]}
         frame, name, n1, n2 = self._getAndCheckOps(options, check_class=False)
-        if not ((isinstance(n1, int) and isinstance(n2, int)) or (isinstance(n1, bool) and isinstance(n2, bool)) or (isinstance(n1, str) and isinstance(n2, str) or isinstance(n1, type(None)) or isinstance(n2, type(None)))):
+        if not (((isinstance(n1, int) and not isinstance(n1, bool)) and (isinstance(n2, int) and not isinstance(n2, bool))) or (isinstance(n1, bool) and isinstance(n2, bool)) or (isinstance(n1, str) and isinstance(n2, str) or isinstance(n1, type(None)) or isinstance(n2, type(None)))):
             stderr.write("> Eq: wrong operand type combination\n")
             exit(53) # wrong operand type combination
         frame.save(name, n1 == n2)
@@ -263,22 +267,30 @@ class Or(Instruction):
 class Not(Instruction):
     def execute(self):
         options = {"arg1": ["var"], "arg2": ["var", "bool"]}
-        frame, name, n1, _ = self._getAndCheckOps(options, instance_class=bool)
+        frame, name, n1, _ = self._getAndCheckOps(options, param_count=1, instance_class=bool)
         frame.save(name, not n1)
 
 class Int2char(Instruction):
     def execute(self):
         options = {"arg1": ["var"], "arg2": ["var", "int"]}
-        frame, name, n1, _ = self._getAndCheckOps(options)
+        frame, name, n1, _ = self._getAndCheckOps(options, param_count=1)
+        try:
+            char = chr(n1)
+        except ValueError:
+            stderr.write("> Int2char: int too large for chr()\n")
+            exit(58) # wrong operand value # TODO I'd use 57, but tests expect 58
         frame.save(name, chr(n1))
 
 class Stri2int(Instruction):
     def execute(self):
         options = {"arg1": ["var"], "arg2": ["var", "string"], "arg3": ["var", "int"]}
         frame, name, n1, n2 = self._getAndCheckOps(options, check_class=False)
-        if not (isinstance(n1, str) and isinstance(n2, int)):
+        if not (isinstance(n1, str) and (isinstance(n2, int) and not isinstance(n2, bool))):
             stderr.write("> Stri2Int: wrong operand type\n")
             exit(53) # wrong operand type
+        if n2 > len(n1) -1:
+            stderr.write("> Stri2Int: string index out of range\n")
+            exit(58) # string index out of range
         frame.save(name, ord(n1[n2]))
 
 class Read(Instruction):
@@ -299,7 +311,12 @@ class Read(Instruction):
             except (ValueError, TypeError):
                 val = None
         elif t == "bool":
-            val = True if val.lower() == "true" else False
+            if val == None:
+                pass
+            elif val.lower() == "true":
+                val = True
+            else:
+                val = False
 
         frame.save(name, val)
 
@@ -324,7 +341,7 @@ class Concat(Instruction):
 class Strlen(Instruction):
     def execute(self):
         options = {"arg1": ["var"], "arg2": ["string", "var"]}
-        frame, name, n1, _ = self._getAndCheckOps(options, instance_class=str)
+        frame, name, n1, _ = self._getAndCheckOps(options, param_count=1, instance_class=str)
         frame.save(name, len(n1))
 
 class Getchar(Instruction):
@@ -332,12 +349,12 @@ class Getchar(Instruction):
         options = {"arg1": ["var"], "arg2": ["var", "string"], "arg3": ["var", "int"]}
         frame, name, n1, n2 = self._getAndCheckOps(options, check_class=False)
 
-        if not (isinstance(n1, str) and isinstance(n2, int)):
+        if not (isinstance(n1, str) and (isinstance(n2, int) and not isinstance(n2, bool))):
             stderr.write("> GetChar: wrong operand type\n")
             exit(53) # wrong operand type
         if n2 < 0 or n2 > len(n1) -1:
-            stderr.write("> GetChar: string index out of bounds\n")
-            exit(58) # string index out of bounds
+            stderr.write("> GetChar: string index out of range\n")
+            exit(58) # string index out of range
         frame.save(name, n1[n2])
 
 class Setchar(Instruction):
@@ -345,17 +362,20 @@ class Setchar(Instruction):
         FRAME = FrameManager.getInstance()
         options = {"arg1": ["var"], "arg2": ["var", "int"], "arg3": ["var", "string"]}
         frame, name, n1, n2 = self._getAndCheckOps(options, check_class=False)
-        val = FRAME.getVal(name)
+        val = FRAME.getVal(self.args["arg1"].text)
 
-        if not (isinstance(val, str) and isinstance(n1, int) and isinstance(n2, str)):
+        if n2 == None:
+            stderr.write("> Setchar: wrong arg3 value - empty\n")
+            exit(58) # wrong arg3 value - empty
+        if not (isinstance(val, str) and (isinstance(n1, int) and not isinstance(n1, bool)) and isinstance(n2, str)):
             stderr.write("> Setchar: wrong operand type\n")
             exit(53) # wrong operand type
-        if n2 < 0 or n2 > len(val) -1:
-            stderr.write("> Setchar: string index out of bounds\n")
-            exit(58) # string index out of bounds
+        if n1 < 0 or n1 > len(val) -1:
+            stderr.write("> Setchar: string index out of range\n")
+            exit(58) # string index out of range
 
-        val[n1] = n2[0]
-        frame.save(name, val)
+        newVal = val[:n1] + n2[0] + val[n1+1:]
+        frame.save(name, newVal)
 
 class Type(Instruction):
     def execute(self):
@@ -403,6 +423,7 @@ class Jumpifeq(Instruction):
         
         n1 = n2 = None
         for arg in self.args: # warning: arguments can come in any order
+            arg = self.args[arg]
             if arg.tag == "arg1": continue # arg1 is not an operand
 
             n = self._cast(arg)
@@ -412,7 +433,7 @@ class Jumpifeq(Instruction):
             elif arg.tag == "arg3":
                 n2 = n
         
-        if not ((isinstance(n1, int) and isinstance(n2, int)) or (isinstance(n1, bool) and isinstance(n2, bool)) or (isinstance(n1, str) and isinstance(n2, str) or isinstance(n1, type(None)) or isinstance(n2, type(None)))):
+        if not (((isinstance(n1, int) and not isinstance(n1, bool)) and (isinstance(n2, int) and not isinstance(n2, bool))) or (isinstance(n1, bool) and isinstance(n2, bool)) or (isinstance(n1, str) and isinstance(n2, str) or isinstance(n1, type(None)) or isinstance(n2, type(None)))):
             stderr.write("> Jumpifeq: wrong operand type combination\n")
             exit(53) # wrong operand type combination
 
@@ -430,6 +451,7 @@ class Jumpifneq(Instruction):
         
         n1 = n2 = None
         for arg in self.args: # warning: arguments can come in any order
+            arg = self.args[arg]
             if arg.tag == "arg1": continue # arg1 is not an operand
 
             n = self._cast(arg)
@@ -439,7 +461,7 @@ class Jumpifneq(Instruction):
             elif arg.tag == "arg3":
                 n2 = n
         
-        if not ((isinstance(n1, int) and isinstance(n2, int)) or (isinstance(n1, bool) and isinstance(n2, bool)) or (isinstance(n1, str) and isinstance(n2, str) or isinstance(n1, type(None)) or isinstance(n2, type(None)))):
+        if not (((isinstance(n1, int) and not isinstance(n1, bool)) and (isinstance(n2, int) and not isinstance(n2, bool))) or (isinstance(n1, bool) and isinstance(n2, bool)) or (isinstance(n1, str) and isinstance(n2, str) or isinstance(n1, type(None)) or isinstance(n2, type(None)))):
             stderr.write("> Jumpifneq: wrong operand type combination\n")
             exit(53) # wrong operand type combination
 
@@ -456,7 +478,7 @@ class Exit(Instruction):
 
         errCode = self._cast(self.args["arg1"])
 
-        if not isinstance(errCode, int):
+        if not (isinstance(errCode, int) and not isinstance(errCode, bool)):
             stderr.write("> Exit: wrong operand type \n")
             exit(53) # wrong operand type        
         if errCode < 0 or errCode > 49:

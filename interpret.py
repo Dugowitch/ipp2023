@@ -6,10 +6,11 @@ from InstructionFactory import InstructionFactory
 from StackManager import StackManager
 from XMLManager import XMLManager
 
-from sys import stderr
+# from sys import stderr
 
 
 def interpret():
+    # initialize all
     ArgParser()
     IOManager()
     XMLManager()
@@ -21,6 +22,7 @@ def interpret():
     FLOW = FlowManager.getInstance()
     IF = InstructionFactory.getInstance()
 
+    # program loop
     while (True):
         curr = FLOW.getNextIns()
 
@@ -30,5 +32,5 @@ def interpret():
         ins = IF.gen(curr)
         # stderr.write(f"> interpret(): {ins}\n") # REMOVE
         ins.execute()
-        
+
 interpret()

@@ -78,6 +78,9 @@ class XMLManager():
                 except (ValueError, IndexError, TypeError):
                     stderr.write("> XMLManager: argN, N not in {1, 2, 3}\n")
                     exit(32)
+                
+                if arg.text != None:
+                    arg.text = arg.text.strip()
 
     def getIns(self, index):
         return self.root[index]

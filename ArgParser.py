@@ -17,10 +17,10 @@ class ArgParser:
             stderr.write("> Argparser: missing parameter\n")
             exit(10) # missing parameter or forbidden combination
 
-        for arg in argv:
+        for i, arg in enumerate(argv):
             ALLOWED_ARGS = ["--help", "-h", "--source", "--input"]
 
-            if arg == "interpret.py":
+            if i == 0: # skip first argument (interpret.py)
                 continue
 
             if "=" not in arg:
