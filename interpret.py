@@ -6,31 +6,42 @@ from InstructionFactory import InstructionFactory
 from StackManager import StackManager
 from XMLManager import XMLManager
 
-# from sys import stderr
+class Interpreter:
+    __instance = None
 
+    def __new__(cls):
+        if cls.__instance == None:
+            cls.__instance = super().__new__(cls)
+        return cls.__instance
 
-def interpret():
-    # initialize all
-    ArgParser()
-    IOManager()
-    XMLManager()
-    FlowManager()
-    FrameManager()
-    StackManager()
-    InstructionFactory()
-    
-    FLOW = FlowManager.getInstance()
-    IF = InstructionFactory.getInstance()
+    def __init__(self):
+        # initialize all
+        ArgParser()
+        IOManager()
+        XMLManager()
+        FlowManager()
+        FrameManager()
+        StackManager()
+        InstructionFactory()
 
-    # program loop
-    while (True):
-        curr = FLOW.getNextIns()
+    @staticmethod
+    def getInstance():
+        return __class__.__instance
 
-        if curr == None:
-            break
-        
-        ins = IF.gen(curr)
-        # stderr.write(f"> interpret(): {ins}\n") # REMOVE
-        ins.execute()
+    def interpret(self):
+        FLOW = FlowManager.getInstance()
+        IF = InstructionFactory.getInstance()
 
-interpret()
+        # program loop
+        while (True):
+            curr = FLOW.getNextIns()
+
+            # end condition
+            if curr == None:
+                break
+            
+            ins = IF.gen(curr)
+            ins.execute()
+
+my_interpreter = Interpreter()
+my_interpreter.interpret()

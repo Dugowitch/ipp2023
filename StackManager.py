@@ -9,18 +9,18 @@ class StackManager:
         return cls.__instance
 
     def __init__(self):
-        self.stack = []
+        self.__stack = []
 
     @staticmethod
     def getInstance():
         return __class__.__instance
 
     def push(self, symb):
-        self.stack.append(symb)
+        self.__stack.append(symb)
 
     def pop(self):
-        if self.stack == []:
+        if self.__stack == []:
             stderr.write("> StackManager: missing stack item\n")
             exit(56) # missing stack item
 
-        return self.stack.pop()
+        return self.__stack.pop()

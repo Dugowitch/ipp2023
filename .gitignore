@@ -1,6 +1,5 @@
 .vscode/
 __pycache__/
-*.drawio
 *.svg
 *.sh
 *.jar
@@ -8,3 +7,4 @@ tests/
 tests2/
 test.php
 *.tgz
+*.png

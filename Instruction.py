@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from sys import stderr
-import re
 
 from FrameManager import FrameManager
 from FlowManager import FlowManager
@@ -17,34 +16,6 @@ class Instruction(ABC):
                 exit(32) # duplicit arg order
 
             self.args[arg.tag] = arg
-
-    # def _checkArgsText(self, arg_types_list):
-    #     pattern_mapping = {
-    #         "int": r"^int@[\-+]?([0-9]+|0x[A-Fa-f0-9]+)$",
-    #         "bool": r"^bool@(true|false)$",
-    #         "string": r"^string@([^\\\\\s#]|\\\\\d{3})*$",
-    #         "nil": r"^nil@nil$",
-    #         "label": r"^[A-Za-z_\-$&%*!?][A-Za-z_\-$&%*!?0-9]*$",
-    #         "type": r"^(int|string|bool)$",
-    #         "var": r"^(G|L|T)F@[A-Za-z_\-$&%*!?][A-Za-z_\-$&%*!?0-9]*$"
-    #     }
-
-    #     if len(self.args) != len(arg_types_list):
-    #         # guess this should never happen since parse.php tests syntax, but better be safe
-    #         stderr.write("> Instruction: expected args length mismatch (1)\n")
-    #         exit(32) # unexpected XML structure
-
-    #     for arg in self.args:
-    #         arg = self.args[arg]
-    #         result = False
-    #         for arg_type in arg_types_list[arg.tag]:
-    #             if re.match(pattern_mapping[arg_type], arg.text):
-    #                 result = True
-    #                 break
-
-    #         if not result: 
-    #             stderr.write("> Instruction: operand value does not match regex\n")
-    #             exit(57) # wrong operand value
         
     def _checkSymb(self, symb):
         if symb.get("type") not in ["var", "int", "bool", "string", "nil"]:
@@ -177,15 +148,8 @@ class Pushs(Instruction):
     def execute(self):
         STACK = StackManager.getInstance()
         arg1 = self.args["arg1"]
-        
         self._checkSymb(arg1)
-        # self._checkArgsText({"arg1": ["int", "bool", "string", "nil", "var"]})
         toPush = self._cast(arg1)
-        # REMOVE
-        # if self.args["arg1"].get("type") == "var":
-        #     toPush = FRAME.getVal(self.args["arg1"].text)
-        # else:
-        #     toPush = self.args["arg1"].text
         STACK.push(toPush)
 
 class Pops(Instruction):
@@ -504,7 +468,7 @@ class Break(Instruction):
         IO = IOManager.getInstance()
         FLOW = FlowManager.getInstance()
 
-        IO.write(f"BREAK: instruction #{FLOW.ip +1} - {self.opcode}\n", 1);
+        IO.write(f"BREAK: instruction #{FLOW.ip +1} - {self.opcode}\n", True);
         self.__printFrames()
 
     def __printFrames(self):
@@ -529,18 +493,18 @@ class Break(Instruction):
         IO = IOManager.getInstance()
         
         dict_name = f"{name} = "
-        IO.write(dict_name, 1);
-        IO.write("{ ", 1)
+        IO.write(dict_name, True);
+        IO.write("{ ", True)
         isfirst = True
         for key, val in frame.items():
             if isfirst:
                 isfirst = False
             else:
-                IO.write(", ", 1)
+                IO.write(", ", True)
             if isinstance(val, str):
                 val = f"\"{val}\""
             if val == None:
                 val = "nil"
             key_value_pair = f"\"{key}\" = {val}"
-            IO.write(key_value_pair, 1);
-        IO.write(" }\n", 1)
+            IO.write(key_value_pair, True);
+        IO.write(" }\n", True)

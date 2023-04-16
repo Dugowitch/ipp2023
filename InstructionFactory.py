@@ -13,31 +13,6 @@ class InstructionFactory:
     def getInstance():
         return __class__.__instance
     
-    # def getReq(ins):
-    #     FRAME = FrameManager.getInstance()
-    #     FLOW = FlowManager.getInstance()
-    #     IO = IOManager.getInstance()
-    #     STACK = StackManager.getInstance()
-    #     opcode = ins.get("opcode").upper()
-    #     req_mapping = {
-    #         "FRAME": ["MOVE", "CREATEFRAME", "PUSHFRAME", "POPFRAME", "DEFVAR", "PUSHS", "POPS", "ADD", "SUB", "MUL", "IDIV", "LT", "GT", "EQ", "AND", "OR", "NOT", "INT2CHAR", "STRI2INT", "READ", "WRITE", "CONCAT", "STRLEN", "GETCHAR", "SETCHAR", "TYPE", "DPRINT", "BREAK", "JUMPIFEQ", "JUMPIFNEQ"],
-    #         "FLOW": ["CALL", "RETURN", "JUMP", "JUMPIFEQ", "JUMPIFNEQ", "BREAK"],
-    #         "IO": ["READ", "WRITE", "DPRINT", "BREAK"],
-    #         "STACK": ["PUSHS", "POPS"]
-    #     }
-    #     req = []
-
-    #     if (opcode in req_mapping["FRAME"]):
-    #         req.append(FRAME);
-    #     if (opcode in req_mapping["FLOW"]):
-    #         req.append(FLOW);
-    #     if (opcode in req_mapping["IO"]):
-    #         req.append(IO);
-    #     if (opcode in req_mapping["STACK"]):
-    #         req.append(STACK);
-
-    #     return req
-
     def gen(self, ins):
         opcode = ins.get("opcode").upper()
         
